@@ -548,7 +548,7 @@ export async function friendAdd(ctx: Context, uid: string): Promise<UserProfile 
 
 ## Resolved Questions
 
-1. **图片处理**: ✅ 使用 `@cf-wasm/photon` 替代 Sharp（详见 Decision 7）。
+1. **图片处理**: ✅ 使用 `@cf-wasm/photon` 替代 Sharp（详见 Decision 8）。
    - 支持 resize、获取宽高、raw pixels
    - Bundle ~2.5MB，符合 Workers 限制
    - 注意：大图片需要内存限制检查（Workers 128MB limit）

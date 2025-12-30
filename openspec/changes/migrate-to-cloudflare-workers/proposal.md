@@ -55,6 +55,7 @@ The current Node.js + Fastify architecture requires traditional server infrastru
 - `cache` - New caching layer specification
 - `realtime` - New real-time communication specification
 - `api` - Updated API framework specification
+- `lock` - New distributed lock specification
 
 ### Affected Code
 - All source files in `/sources` require review/rewrite

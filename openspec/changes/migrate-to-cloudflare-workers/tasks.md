@@ -45,7 +45,7 @@
   - [ ] `set(key, value, ttl)` - Set with expiration
   - [ ] `delete(key)` - Delete key
   - [ ] `list(prefix)` - List keys by prefix
-- [ ] 3.4 Replace Redis cache calls with KV wrapper
+- [ ] 3.4 Replace simpleCache (database-based) with KV wrapper
 
 ## 4. Event Bus & Pub/Sub Migration
 
@@ -56,7 +56,7 @@
   - [ ] `publish(channel, message)`
   - [ ] `unsubscribe(channel)`
 - [ ] 4.4 Update `wrangler.toml` with DO bindings
-- [ ] 4.5 Replace Redis pub/sub with DO event bus
+- [ ] 4.5 Implement DO event bus (new capability, no existing pub/sub to replace)
 
 ## 5. Real-time (WebSocket) Migration
 
@@ -77,7 +77,7 @@
   - [ ] `acquire(lockId, ttl)`
   - [ ] `release(lockId)`
   - [ ] `extend(lockId, ttl)`
-- [ ] 6.3 Replace Redis-based locks with DO locks
+- [ ] 6.3 Replace process-internal AsyncLock with DO distributed locks
 
 ## 7. API Routes Migration
 
