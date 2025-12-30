@@ -31,10 +31,10 @@
   - [x] Handle PrismaD1 adapter initialization
 - [x] 2.6 Migrate `inTx` to `inBatch` pattern:
   - [x] Create `inBatch` utility for D1 batch operations
-  - [ ] Migrate `kvMutate.ts` to read-then-batch
-  - [ ] Migrate `sessionDelete.ts` to read-then-batch
-  - [ ] Migrate `friendAdd.ts` to read-then-batch
-  - [ ] Migrate `friendRemove.ts` to read-then-batch
+  - [x] Migrate `kvMutate.ts` to read-then-batch
+  - [x] Migrate `sessionDelete.ts` to read-then-batch
+  - [x] Migrate `friendAdd.ts` to read-then-batch
+  - [x] Migrate `friendRemove.ts` to read-then-batch
 
 ## 3. Cache Layer Migration
 
