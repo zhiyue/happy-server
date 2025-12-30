@@ -28,9 +28,14 @@ The current Node.js + Fastify architecture requires traditional server infrastru
 - Impact: Schema migration required, some PostgreSQL-specific features unavailable
 
 ### **BREAKING** - Cache & Pub/Sub
-- FROM: Redis (ioredis)
+- FROM: Database-based cache (`simpleCache`), Redis (health check only)
 - TO: Cloudflare KV (cache) + Durable Objects (pub/sub state)
 - Impact: Different API patterns, eventual consistency for KV
+
+### **BREAKING** - Distributed Locks
+- FROM: Process-internal `AsyncLock` (not distributed)
+- TO: Durable Objects (true distributed locks)
+- Impact: New distributed coordination capability
 
 ### **BREAKING** - Real-time Communication
 - FROM: Socket.io
@@ -68,4 +73,4 @@ The current Node.js + Fastify architecture requires traditional server infrastru
 - Cloudflare D1 database
 - Cloudflare KV namespace
 - Cloudflare Durable Objects (if needed for stateful operations)
-- Cloudflare R2 (for file storage, replacing local file system)
+- Cloudflare R2 (for file storage, replacing MinIO/S3)

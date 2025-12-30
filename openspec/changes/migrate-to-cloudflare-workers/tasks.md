@@ -2,7 +2,7 @@
 
 ## 1. Project Setup
 
-- [ ] 1.1 Install Wrangler CLI globally (`npm install -g wrangler`)
+- [ ] 1.1 Install Wrangler CLI globally (`yarn global add wrangler`)
 - [ ] 1.2 Initialize Wrangler project (`wrangler init`)
 - [ ] 1.3 Configure `wrangler.toml` with D1, KV, R2 and DO bindings
 - [ ] 1.4 Set up TypeScript configuration for Workers environment

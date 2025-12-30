@@ -6,8 +6,10 @@ Happy Server is currently built on a traditional Node.js stack:
 - **Runtime**: Node.js 20
 - **Framework**: Fastify 5
 - **Database**: PostgreSQL + Prisma
-- **Cache/Pub-Sub**: Redis (ioredis)
+- **Cache**: Database-based (`simpleCache` uses Prisma, not Redis)
+- **Redis**: Health check only (`redis.ping()`) - minimal usage, can be removed
 - **Real-time**: Socket.io
+- **Locks**: Process-internal `AsyncLock` (not distributed)
 - **Deployment**: Docker containers
 
 This migration moves to Cloudflare's edge computing platform, requiring fundamental changes to how the application is structured and deployed.
@@ -87,10 +89,29 @@ export default {
 **Schema Migration Strategy**:
 1. Change provider from `postgresql` to `sqlite`
 2. Handle PostgreSQL-specific types:
-   - `UUID` → `String` (SQLite stores as TEXT)
-   - `Json` → Keep as `Json` (Prisma handles serialization)
-   - `DateTime` → Keep as `DateTime` (stored as TEXT ISO 8601)
-   - `BigInt` → `Int` or keep as `BigInt`
+
+| Type | PostgreSQL | SQLite/D1 | Notes |
+|------|------------|-----------|-------|
+| `String` (UUID) | `uuid` | `TEXT` | ✅ Compatible |
+| `Json` | `jsonb` | `TEXT` | ✅ Prisma handles serialization |
+| `DateTime` | `timestamp` | `TEXT` (ISO 8601) | ✅ Compatible |
+| `Bytes` | `bytea` | `BLOB` | ✅ Compatible |
+| `BigInt` | `int8` | `INTEGER` | ❌ [Prisma D1 bug #23865](https://github.com/prisma/prisma/issues/23865) - 生成无效 SQL。需改用 `Int` 或 `String` |
+| `enum` | Native enum | `TEXT` | ✅ Prisma handles as string |
+| `@@index(sort: Desc)` | Supported | Supported | ✅ SQLite 3.3.0+ 支持 DESC 索引 |
+
+**BigInt 迁移计划** (影响 `Account.feedSeq`, `UserFeedItem.counter`):
+```prisma
+// Before
+feedSeq BigInt @default(0)
+
+// After - 使用 Int（如果值范围在 32-bit 内）
+feedSeq Int @default(0)
+
+// 或使用 String（如果需要大数值）
+feedSeq String @default("0")
+```
+
 3. Use `prisma migrate diff` + Wrangler for migrations
 
 **Alternatives Considered**:
@@ -130,9 +151,9 @@ const cached = await env.MY_KV.get('key');
 - Can coordinate across multiple Worker instances
 
 **Use Cases**:
-- **Event Bus**: Replace Redis pub/sub with DO message routing
-- **Locks**: Use DO's single-threaded nature for distributed locks
-- **Real-time**: WebSocket connections managed by DOs
+- **Event Bus**: New capability (no existing Redis pub/sub to replace)
+- **Locks**: Upgrade process-internal `AsyncLock` to distributed locks using DO's single-threaded nature
+- **Real-time**: WebSocket connections managed by DOs (replace Socket.io)
 
 **Architecture**:
 ```
@@ -171,7 +192,33 @@ export interface Env {
 }
 ```
 
-### 7. Image Processing: @cf-wasm/photon
+### 7. Real-time Communication: Durable Objects WebSocket
+
+**Decision**: Replace Socket.io with Durable Objects WebSocket API.
+
+**Rationale**:
+- Socket.io requires persistent server processes (incompatible with Workers)
+- Durable Objects provide WebSocket support with state persistence
+- Built-in hibernation reduces costs during idle periods
+- Single-threaded execution per DO ensures consistency
+
+**Migration Strategy**:
+1. Create `ConnectionManager` Durable Object for WebSocket handling
+2. Implement room-based broadcasting (replaces Socket.io rooms)
+3. Handle connection lifecycle: upgrade, message, close, error
+4. Implement heartbeat/ping-pong for connection health
+5. Use DO storage for connection state persistence
+
+**Key Differences from Socket.io**:
+| Feature | Socket.io | Durable Objects |
+|---------|-----------|-----------------|
+| Auto-reconnect | Built-in | Must implement client-side |
+| Rooms | Native API | Custom implementation |
+| Acknowledgements | Built-in | Must implement |
+| Binary data | Supported | Supported |
+| Fallback transports | Polling fallback | WebSocket only |
+
+### 8. Image Processing: @cf-wasm/photon
 
 **Decision**: Use `@cf-wasm/photon` to replace Sharp for image processing.
 
@@ -266,6 +313,8 @@ function detectFormat(bytes: Uint8Array): 'png' | 'jpeg' {
 - Slightly different resize algorithms (Lanczos3 vs Sharp's default)
 
 ## Transaction Migration Strategy
+
+> **Note**: This section describes a **hybrid approach** that combines Prisma for reads with raw D1 batch for atomic writes. This is necessary because Prisma's D1 adapter does not support `$transaction()`. The Prisma API (Decision 2) is preserved for all read operations and simple writes; only multi-statement atomic writes require raw D1 batch.
 
 ### The Problem
 
@@ -497,9 +546,9 @@ export async function friendAdd(ctx: Context, uid: string): Promise<UserProfile 
 - Feature flag for gradual rollout if needed
 - Database migration is one-way; maintain backups
 
-## Open Questions
+## Resolved Questions
 
-1. **图片处理**: ✅ 已解决。使用 `@cf-wasm/photon` 替代 Sharp（详见 Decision 7）。
+1. **图片处理**: ✅ 使用 `@cf-wasm/photon` 替代 Sharp（详见 Decision 7）。
    - 支持 resize、获取宽高、raw pixels
    - Bundle ~2.5MB，符合 Workers 限制
    - 注意：大图片需要内存限制检查（Workers 128MB limit）
@@ -511,12 +560,14 @@ export async function friendAdd(ctx: Context, uid: string): Promise<UserProfile 
      - Cloudflare Stream: 托管视频服务
      - 外部服务: AWS Lambda/专用服务器
 
-3. **Data Migration**: How to migrate existing PostgreSQL data to D1?
+## Open Questions
+
+1. **Data Migration**: How to migrate existing PostgreSQL data to D1?
    - Export as SQL/CSV
    - Write migration script
    - Consider data transformation needs (PostgreSQL types → SQLite types)
 
-4. **Prisma D1 Maturity**: Prisma D1 adapter is in preview. Monitor for:
+2. **Prisma D1 Maturity**: Prisma D1 adapter is in preview. Monitor for:
    - Performance issues
    - Missing features
    - Breaking changes in updates
