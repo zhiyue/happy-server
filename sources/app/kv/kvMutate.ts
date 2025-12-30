@@ -1,5 +1,5 @@
-import { db } from "@/storage/db";
-import { inTx, afterTx } from "@/storage/inTx";
+import { WorkerContext } from "@/context";
+import { inBatch, addStatement, afterBatch } from "@/storage/inBatch";
 import { allocateUserSeq } from "@/storage/seq";
 import { randomKeyNaked } from "@/utils/randomKeyNaked";
 import { eventRouter, buildKVBatchUpdateUpdate } from "@/app/events/eventRouter";
@@ -26,25 +26,33 @@ export interface KVMutateResult {
 }
 
 /**
- * Atomically mutate multiple key-value pairs.
+ * Atomically mutate multiple key-value pairs using D1 batch.
+ *
+ * Pattern: Read-then-batch
+ * 1. Read phase: Use Prisma to validate versions and check for conflicts
+ * 2. Write phase: Use D1 batch for atomic insert/update operations
+ * 3. Side effects: Send notifications after successful batch
+ *
  * All mutations succeed or all fail.
  * Version is always required for all operations (use -1 for new keys).
  * Delete operations set value to null but keep the record with incremented version.
  * Sends a single bundled update notification for all changes.
  */
 export async function kvMutate(
-    ctx: { uid: string },
+    ctx: WorkerContext,
     mutations: KVMutation[]
 ): Promise<KVMutateResult> {
-    return await inTx(async (tx) => {
+    const { prisma, db, uid } = ctx;
+
+    return await inBatch(db, async (batchCtx) => {
         const errors: KVMutateResult['errors'] = [];
 
-        // Pre-validate all mutations
+        // Read phase: Pre-validate all mutations using Prisma
         for (const mutation of mutations) {
-            const existing = await tx.userKVStore.findUnique({
+            const existing = await prisma.userKVStore.findUnique({
                 where: {
                     accountId_key: {
-                        accountId: ctx.uid,
+                        accountId: uid,
                         key: mutation.key
                     }
                 }
@@ -63,72 +71,62 @@ export async function kvMutate(
             }
         }
 
-        // If any errors, return all errors and abort
+        // If any errors, return all errors and abort (no writes queued)
         if (errors.length > 0) {
             return { success: false, errors };
         }
 
-        // Apply all mutations and collect results
+        // Write phase: Queue all mutations as D1 statements
         const results: Array<{ key: string; version: number }> = [];
         const changes: Array<{ key: string; value: string | null; version: number }> = [];
 
         for (const mutation of mutations) {
             if (mutation.version === -1) {
                 // Create new entry (must not exist)
-                const result = await tx.userKVStore.create({
-                    data: {
-                        accountId: ctx.uid,
-                        key: mutation.key,
-                        value: mutation.value ? new Uint8Array(Buffer.from(mutation.value, 'base64')) : null,
-                        version: 0
-                    }
-                });
+                const newVersion = 0;
+                const valueBytes = mutation.value ? privacyKit.decodeBase64(mutation.value) : null;
+
+                addStatement(batchCtx, db.prepare(
+                    'INSERT INTO UserKVStore (accountId, key, value, version) VALUES (?, ?, ?, ?)'
+                ).bind(uid, mutation.key, valueBytes, newVersion));
 
                 results.push({
                     key: mutation.key,
-                    version: result.version
+                    version: newVersion
                 });
 
                 changes.push({
                     key: mutation.key,
                     value: mutation.value,
-                    version: result.version
+                    version: newVersion
                 });
             } else {
                 // Update existing entry (including "delete" which sets value to null)
                 const newVersion = mutation.version + 1;
+                const valueBytes = mutation.value ? privacyKit.decodeBase64(mutation.value) : null;
 
-                const result = await tx.userKVStore.update({
-                    where: {
-                        accountId_key: {
-                            accountId: ctx.uid,
-                            key: mutation.key
-                        }
-                    },
-                    data: {
-                        value: mutation.value ? privacyKit.decodeBase64(mutation.value) : null,
-                        version: newVersion
-                    }
-                });
+                addStatement(batchCtx, db.prepare(
+                    'UPDATE UserKVStore SET value = ?, version = ? WHERE accountId = ? AND key = ?'
+                ).bind(valueBytes, newVersion, uid, mutation.key));
 
                 results.push({
                     key: mutation.key,
-                    version: result.version
+                    version: newVersion
                 });
 
                 changes.push({
                     key: mutation.key,
                     value: mutation.value,
-                    version: result.version
+                    version: newVersion
                 });
             }
         }
 
-        // Send single bundled notification for all changes
-        afterTx(tx, async () => {
-            const updateSeq = await allocateUserSeq(ctx.uid);
+        // Side effects: Send notification after successful batch
+        afterBatch(batchCtx, async () => {
+            const updateSeq = await allocateUserSeq(uid);
             eventRouter.emitUpdate({
-                userId: ctx.uid,
+                userId: uid,
                 payload: buildKVBatchUpdateUpdate(changes, updateSeq, randomKeyNaked(12)),
                 recipientFilter: { type: 'user-scoped-only' }
             });
