@@ -4,30 +4,37 @@
 
 - [ ] 1.1 Install Wrangler CLI globally (`npm install -g wrangler`)
 - [ ] 1.2 Initialize Wrangler project (`wrangler init`)
-- [ ] 1.3 Configure `wrangler.toml` with D1, KV, and DO bindings
+- [ ] 1.3 Configure `wrangler.toml` with D1, KV, R2 and DO bindings
 - [ ] 1.4 Set up TypeScript configuration for Workers environment
 - [ ] 1.5 Install core dependencies:
   - [ ] `hono` - Web framework
   - [ ] `@hono/zod-validator` - Zod integration
-  - [ ] `drizzle-orm` - ORM
-  - [ ] `drizzle-kit` - Migrations
+  - [ ] `prisma` - Prisma CLI
+  - [ ] `@prisma/client` - Prisma client
+  - [ ] `@prisma/adapter-d1` - Prisma D1 adapter
+  - [ ] `@cloudflare/workers-types` - TypeScript type definitions
+  - [ ] `@cf-wasm/photon` - Image processing
 - [ ] 1.6 Create `.dev.vars` for local development secrets
 - [ ] 1.7 Set up Miniflare for local testing
 
-## 2. Database Migration
+## 2. Database Migration (Prisma + D1)
 
-- [ ] 2.1 Export current Prisma schema
-- [ ] 2.2 Create Drizzle schema directory (`/sources/db/schema/`)
-- [ ] 2.3 Convert Prisma models to Drizzle tables:
-  - [ ] Handle UUID → TEXT conversion
-  - [ ] Handle JSONB → TEXT with JSON type
-  - [ ] Handle timestamps → INTEGER/TEXT
-  - [ ] Handle relations and foreign keys
-- [ ] 2.4 Create D1 database (`wrangler d1 create happy-server-db`)
-- [ ] 2.5 Generate initial migration (`drizzle-kit generate`)
-- [ ] 2.6 Apply migration to D1 (`wrangler d1 migrations apply`)
-- [ ] 2.7 Create database client wrapper (`/sources/db/client.ts`)
-- [ ] 2.8 Implement transaction wrapper for D1
+- [ ] 2.1 Update Prisma schema for SQLite/D1:
+  - [ ] Change provider from `postgresql` to `sqlite`
+  - [ ] Add `driverAdapters` preview feature
+  - [ ] Review/update field types for SQLite compatibility
+- [ ] 2.2 Create D1 database (`wrangler d1 create happy-server-db`)
+- [ ] 2.3 Generate D1 migration using `prisma migrate diff`
+- [ ] 2.4 Apply migration to D1 (`wrangler d1 migrations apply`)
+- [ ] 2.5 Create Prisma client wrapper for Workers:
+  - [ ] Implement `getPrisma(env)` factory function
+  - [ ] Handle PrismaD1 adapter initialization
+- [ ] 2.6 Migrate `inTx` to `inBatch` pattern:
+  - [ ] Create `inBatch` utility for D1 batch operations
+  - [ ] Migrate `kvMutate.ts` to read-then-batch
+  - [ ] Migrate `sessionDelete.ts` to read-then-batch
+  - [ ] Migrate `friendAdd.ts` to read-then-batch
+  - [ ] Migrate `friendRemove.ts` to read-then-batch
 
 ## 3. Cache Layer Migration
 
@@ -97,14 +104,22 @@
   - [ ] `download(key)`
   - [ ] `delete(key)`
   - [ ] `getSignedUrl(key)`
-- [ ] 8.4 Migrate local file operations to R2
+- [ ] 8.4 Migrate MinIO/S3 operations to R2
 
-## 9. Media Processing
+## 9. Image Processing Migration
 
-- [ ] 9.1 Evaluate Cloudflare Stream for video processing
-- [ ] 9.2 Evaluate Cloudflare Images for image processing
-- [ ] 9.3 Design fallback strategy for unsupported operations
-- [ ] 9.4 Implement media module with Workers-compatible approach
+- [ ] 9.1 Install `@cf-wasm/photon` package
+- [ ] 9.2 Migrate `processImage.ts`:
+  - [ ] Replace `sharp` with `PhotonImage`
+  - [ ] Implement `resize()` using photon
+  - [ ] Implement `detectFormat()` using magic bytes
+  - [ ] Add memory cleanup (`.free()` calls)
+- [ ] 9.3 Migrate `uploadImage.ts`:
+  - [ ] Update to use new `processImage()`
+  - [ ] Replace MinIO with R2
+- [ ] 9.4 Add image size validation (reject > 5MB for memory safety)
+- [ ] 9.5 Keep `thumbhash.ts` unchanged (pure JS, Workers-compatible)
+- [ ] 9.6 Remove `sharp` dependency from package.json
 
 ## 10. Configuration & Secrets
 
@@ -123,6 +138,7 @@
   - [ ] Database operations
   - [ ] WebSocket connections
   - [ ] Event bus
+  - [ ] Image processing
 - [ ] 11.5 Add E2E tests
 
 ## 12. Deployment
@@ -130,14 +146,18 @@
 - [ ] 12.1 Create staging environment
 - [ ] 12.2 Set up CI/CD pipeline for Workers deployment
 - [ ] 12.3 Configure custom domain (if needed)
-- [ ] 12.4 Create data migration scripts
+- [ ] 12.4 Create data migration scripts (PostgreSQL → D1)
 - [ ] 12.5 Document deployment process
 
 ## 13. Cleanup
 
-- [ ] 13.1 Remove Node.js-specific dependencies
+- [ ] 13.1 Remove Node.js-specific dependencies:
+  - [ ] `sharp`
+  - [ ] `ioredis`
+  - [ ] `socket.io`
+  - [ ] `minio`
 - [ ] 13.2 Remove Dockerfile and Docker-related files
-- [ ] 13.3 Remove Prisma files
-- [ ] 13.4 Update package.json scripts
+- [ ] 13.3 Update Prisma schema (keep, but for sqlite)
+- [ ] 13.4 Update package.json scripts for Wrangler
 - [ ] 13.5 Update CLAUDE.md with new development guidelines
 - [ ] 13.6 Update README with Cloudflare deployment instructions

@@ -24,7 +24,7 @@ The current Node.js + Fastify architecture requires traditional server infrastru
 
 ### **BREAKING** - Database
 - FROM: PostgreSQL + Prisma ORM
-- TO: Cloudflare D1 (SQLite-based) + Drizzle ORM
+- TO: Cloudflare D1 (SQLite-based) + Prisma ORM (via @prisma/adapter-d1)
 - Impact: Schema migration required, some PostgreSQL-specific features unavailable
 
 ### **BREAKING** - Cache & Pub/Sub
@@ -53,7 +53,7 @@ The current Node.js + Fastify architecture requires traditional server infrastru
 
 ### Affected Code
 - All source files in `/sources` require review/rewrite
-- `/prisma` schema → Drizzle schema migration
+- `/prisma` schema → Update for SQLite/D1 compatibility (keep Prisma)
 - `/Dockerfile` → `wrangler.toml`
 - Environment variable handling → Cloudflare secrets/bindings
 - All Redis-dependent code → KV/Durable Objects

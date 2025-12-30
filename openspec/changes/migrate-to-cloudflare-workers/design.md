@@ -154,7 +154,7 @@ const cached = await env.MY_KV.get('key');
 **Decision**: Use R2 for file/media storage.
 
 **Rationale**:
-- S3-compatible API (easy migration from local file system)
+- S3-compatible API (easy migration from MinIO/S3)
 - No egress fees
 - Integrated with Workers
 
@@ -170,6 +170,100 @@ export interface Env {
     // ... other secrets
 }
 ```
+
+### 7. Image Processing: @cf-wasm/photon
+
+**Decision**: Use `@cf-wasm/photon` to replace Sharp for image processing.
+
+**Rationale**:
+- Sharp uses native C++ bindings (libvips), incompatible with Workers
+- Photon is Rust compiled to WebAssembly, runs natively in Workers
+- Provides all required functionality: resize, metadata, raw pixel access
+- Bundle size ~2.5MB (within Workers limits)
+
+**Current Usage** (Sharp in `processImage.ts`):
+```typescript
+import sharp from "sharp";
+
+export async function processImage(src: Buffer) {
+    let meta = await sharp(src).metadata();
+    let width = meta.width!;
+    let height = meta.height!;
+
+    const { data, info } = await sharp(src)
+        .resize(targetWidth, targetHeight)
+        .ensureAlpha()
+        .raw()
+        .toBuffer({ resolveWithObject: true });
+
+    const binaryThumbHash = thumbhash(info.width, info.height, data);
+    return { width, height, thumbhash, format: meta.format };
+}
+```
+
+**Migrated Code** (@cf-wasm/photon):
+```typescript
+import { PhotonImage, resize, SamplingFilter } from "@cf-wasm/photon";
+
+export async function processImage(src: Uint8Array) {
+    // Load image from bytes
+    const image = PhotonImage.new_from_byteslice(src);
+    const width = image.get_width();
+    const height = image.get_height();
+
+    // Calculate target dimensions
+    let targetWidth = 100;
+    let targetHeight = 100;
+    if (width > height) {
+        targetHeight = Math.round(height * targetWidth / width);
+    } else if (height > width) {
+        targetWidth = Math.round(width * targetHeight / height);
+    }
+
+    // Resize image
+    const resized = resize(image, targetWidth, targetHeight, SamplingFilter.Lanczos3);
+    const data = resized.get_raw_pixels();  // Uint8Array in RGBA format
+
+    // Generate thumbhash (pure JS, no changes needed)
+    // Note: Use Uint8Array directly; avoid Node.js Buffer in Workers
+    const binaryThumbHash = thumbhash(
+        resized.get_width(),
+        resized.get_height(),
+        data  // Uint8Array works directly
+    );
+
+    // Free WASM memory
+    image.free();
+    resized.free();
+
+    // Convert to base64 using Web API (btoa) instead of Buffer
+    const base64Thumbhash = btoa(String.fromCharCode(...binaryThumbHash));
+
+    return {
+        width,
+        height,
+        thumbhash: base64Thumbhash,
+        format: detectFormat(src)  // Need to implement format detection
+    };
+}
+
+function detectFormat(bytes: Uint8Array): 'png' | 'jpeg' {
+    // PNG magic bytes: 89 50 4E 47
+    if (bytes[0] === 0x89 && bytes[1] === 0x50) return 'png';
+    // JPEG magic bytes: FF D8 FF
+    if (bytes[0] === 0xFF && bytes[1] === 0xD8) return 'jpeg';
+    throw new Error('Unsupported image format');
+}
+```
+
+**Memory Management**:
+- Must call `.free()` on PhotonImage instances to prevent memory leaks
+- Workers have 128MB memory limit; add size checks for large images
+
+**Limitations**:
+- No EXIF extraction (implement separately if needed)
+- Format detection is manual (magic bytes)
+- Slightly different resize algorithms (Lanczos3 vs Sharp's default)
 
 ## Transaction Migration Strategy
 
@@ -372,13 +466,13 @@ export async function friendAdd(ctx: Context, uid: string): Promise<UserProfile 
 
 ### Phase 2: Core Infrastructure
 1. Set up Hono with middleware (CORS, logging, error handling)
-2. Implement Drizzle schema from Prisma models
-3. Create D1 migrations
+2. Update Prisma schema for SQLite/D1 compatibility
+3. Create D1 migrations using `prisma migrate diff`
 4. Implement KV cache wrapper
 
 ### Phase 3: Feature Migration
 1. Migrate API routes (Fastify → Hono)
-2. Migrate database queries (Prisma → Drizzle)
+2. Update database queries for D1 compatibility (Prisma API unchanged)
 3. Migrate cache operations (Redis → KV)
 4. Implement Durable Objects for:
    - WebSocket connections (replace Socket.io)
@@ -405,14 +499,17 @@ export async function friendAdd(ctx: Context, uid: string): Promise<UserProfile 
 
 ## Open Questions
 
-1. **FFmpeg Dependency**: Current project uses FFmpeg for media processing. Workers don't support FFmpeg. Options:
-   - Use Cloudflare Media services (Stream, Images)
-   - Offload to external service (AWS Lambda, dedicated server)
-   - Use WebAssembly-based alternatives (limited functionality)
+1. **图片处理**: ✅ 已解决。使用 `@cf-wasm/photon` 替代 Sharp（详见 Decision 7）。
+   - 支持 resize、获取宽高、raw pixels
+   - Bundle ~2.5MB，符合 Workers 限制
+   - 注意：大图片需要内存限制检查（Workers 128MB limit）
+   - 备选：如需更复杂图片处理，可使用 Cloudflare Containers 运行原生 Sharp
 
-2. **Python Dependency**: Python 代码必须迁移，Workers 不支持 Python。策略:
-   - 移植到 TypeScript（推荐，保持代码库统一）
-   - 使用外部服务处理（如需 Python 特定库）
+2. **视频处理 (FFmpeg)**: ✅ 无需迁移。代码中未使用 FFmpeg，仅在 Dockerfile 中预装。
+   - 如未来需要视频处理，可选方案：
+     - **Cloudflare Containers** (推荐): 2025年6月公开 Beta，可运行 Docker 镜像（含 FFmpeg），按 10ms 计费，最高 4GB RAM
+     - Cloudflare Stream: 托管视频服务
+     - 外部服务: AWS Lambda/专用服务器
 
 3. **Data Migration**: How to migrate existing PostgreSQL data to D1?
    - Export as SQL/CSV
