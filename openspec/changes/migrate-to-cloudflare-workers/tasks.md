@@ -2,35 +2,35 @@
 
 ## 1. Project Setup
 
-- [ ] 1.1 Install Wrangler CLI globally (`yarn global add wrangler`)
-- [ ] 1.2 Initialize Wrangler project (`wrangler init`)
-- [ ] 1.3 Configure `wrangler.toml` with D1, KV, R2 and DO bindings
-- [ ] 1.4 Set up TypeScript configuration for Workers environment
-- [ ] 1.5 Install core dependencies:
-  - [ ] `hono` - Web framework
-  - [ ] `@hono/zod-validator` - Zod integration
-  - [ ] `prisma` - Prisma CLI
-  - [ ] `@prisma/client` - Prisma client
-  - [ ] `@prisma/adapter-d1` - Prisma D1 adapter
-  - [ ] `@cloudflare/workers-types` - TypeScript type definitions
-  - [ ] `@cf-wasm/photon` - Image processing
-- [ ] 1.6 Create `.dev.vars` for local development secrets
+- [x] 1.1 Install Wrangler CLI globally (`yarn global add wrangler`)
+- [x] 1.2 Initialize Wrangler project (`wrangler init`)
+- [x] 1.3 Configure `wrangler.toml` with D1, KV, R2 and DO bindings
+- [x] 1.4 Set up TypeScript configuration for Workers environment
+- [x] 1.5 Install core dependencies:
+  - [x] `hono` - Web framework
+  - [x] `@hono/zod-validator` - Zod integration
+  - [x] `prisma` - Prisma CLI
+  - [x] `@prisma/client` - Prisma client
+  - [x] `@prisma/adapter-d1` - Prisma D1 adapter
+  - [x] `@cloudflare/workers-types` - TypeScript type definitions
+  - [x] `@cf-wasm/photon` - Image processing
+- [x] 1.6 Create `.dev.vars` for local development secrets
 - [ ] 1.7 Set up Miniflare for local testing
 
 ## 2. Database Migration (Prisma + D1)
 
-- [ ] 2.1 Update Prisma schema for SQLite/D1:
-  - [ ] Change provider from `postgresql` to `sqlite`
-  - [ ] Add `driverAdapters` preview feature
-  - [ ] Review/update field types for SQLite compatibility
+- [x] 2.1 Update Prisma schema for SQLite/D1:
+  - [x] Change provider from `postgresql` to `sqlite`
+  - [x] Add `driverAdapters` preview feature
+  - [x] Review/update field types for SQLite compatibility (BigInt → Int)
 - [ ] 2.2 Create D1 database (`wrangler d1 create happy-server-db`)
 - [ ] 2.3 Generate D1 migration using `prisma migrate diff`
 - [ ] 2.4 Apply migration to D1 (`wrangler d1 migrations apply`)
-- [ ] 2.5 Create Prisma client wrapper for Workers:
-  - [ ] Implement `getPrisma(env)` factory function
-  - [ ] Handle PrismaD1 adapter initialization
-- [ ] 2.6 Migrate `inTx` to `inBatch` pattern:
-  - [ ] Create `inBatch` utility for D1 batch operations
+- [x] 2.5 Create Prisma client wrapper for Workers:
+  - [x] Implement `getPrisma(env)` factory function
+  - [x] Handle PrismaD1 adapter initialization
+- [x] 2.6 Migrate `inTx` to `inBatch` pattern:
+  - [x] Create `inBatch` utility for D1 batch operations
   - [ ] Migrate `kvMutate.ts` to read-then-batch
   - [ ] Migrate `sessionDelete.ts` to read-then-batch
   - [ ] Migrate `friendAdd.ts` to read-then-batch
@@ -39,12 +39,12 @@
 ## 3. Cache Layer Migration
 
 - [ ] 3.1 Create KV namespace (`wrangler kv:namespace create CACHE`)
-- [ ] 3.2 Create KV wrapper module (`/sources/modules/kv/`)
-- [ ] 3.3 Implement cache utilities:
-  - [ ] `get(key)` - Get cached value
-  - [ ] `set(key, value, ttl)` - Set with expiration
-  - [ ] `delete(key)` - Delete key
-  - [ ] `list(prefix)` - List keys by prefix
+- [x] 3.2 Create KV wrapper module (`/sources/modules/kv/`)
+- [x] 3.3 Implement cache utilities:
+  - [x] `get(key)` - Get cached value
+  - [x] `set(key, value, ttl)` - Set with expiration
+  - [x] `delete(key)` - Delete key
+  - [x] `list(prefix)` - List keys by prefix
 - [ ] 3.4 Replace simpleCache (database-based) with KV wrapper
 
 ## 4. Event Bus & Pub/Sub Migration
@@ -55,37 +55,37 @@
   - [ ] `subscribe(channel, handler)`
   - [ ] `publish(channel, message)`
   - [ ] `unsubscribe(channel)`
-- [ ] 4.4 Update `wrangler.toml` with DO bindings
+- [x] 4.4 Update `wrangler.toml` with DO bindings
 - [ ] 4.5 Implement DO event bus (new capability, no existing pub/sub to replace)
 
 ## 5. Real-time (WebSocket) Migration
 
-- [ ] 5.1 Create WebSocket Durable Object for connection management
-- [ ] 5.2 Implement WebSocket handling:
-  - [ ] Connection upgrade in Hono route
-  - [ ] Message routing in DO
-  - [ ] Connection state management
-  - [ ] Heartbeat/ping-pong
-- [ ] 5.3 Implement room/channel abstraction (replace Socket.io rooms)
-- [ ] 5.4 Handle disconnection and cleanup
+- [x] 5.1 Create WebSocket Durable Object for connection management
+- [x] 5.2 Implement WebSocket handling:
+  - [x] Connection upgrade in Hono route
+  - [x] Message routing in DO
+  - [x] Connection state management
+  - [x] Heartbeat/ping-pong
+- [x] 5.3 Implement room/channel abstraction (replace Socket.io rooms)
+- [x] 5.4 Handle disconnection and cleanup
 - [ ] 5.5 Replace Socket.io code with DO WebSocket
 
 ## 6. Lock Module Migration
 
-- [ ] 6.1 Design Lock Durable Object
-- [ ] 6.2 Implement distributed lock:
-  - [ ] `acquire(lockId, ttl)`
-  - [ ] `release(lockId)`
-  - [ ] `extend(lockId, ttl)`
+- [x] 6.1 Design Lock Durable Object
+- [x] 6.2 Implement distributed lock:
+  - [x] `acquire(lockId, ttl)`
+  - [x] `release(lockId)`
+  - [x] `extend(lockId, ttl)`
 - [ ] 6.3 Replace process-internal AsyncLock with DO distributed locks
 
 ## 7. API Routes Migration
 
-- [ ] 7.1 Set up Hono app structure (`/sources/app/worker.ts`)
-- [ ] 7.2 Create middleware:
-  - [ ] CORS middleware
-  - [ ] Error handling middleware
-  - [ ] Request logging middleware
+- [x] 7.1 Set up Hono app structure (`/sources/app/worker.ts`)
+- [x] 7.2 Create middleware:
+  - [x] CORS middleware
+  - [x] Error handling middleware
+  - [x] Request logging middleware
   - [ ] Auth middleware (JWT validation)
 - [ ] 7.3 Migrate routes from Fastify to Hono:
   - [ ] Auth routes (`/v1/auth/*`)
@@ -108,17 +108,17 @@
 
 ## 9. Image Processing Migration
 
-- [ ] 9.1 Install `@cf-wasm/photon` package
-- [ ] 9.2 Migrate `processImage.ts`:
-  - [ ] Replace `sharp` with `PhotonImage`
-  - [ ] Implement `resize()` using photon
-  - [ ] Implement `detectFormat()` using magic bytes
-  - [ ] Add memory cleanup (`.free()` calls)
+- [x] 9.1 Install `@cf-wasm/photon` package
+- [x] 9.2 Migrate `processImage.ts`:
+  - [x] Replace `sharp` with `PhotonImage`
+  - [x] Implement `resize()` using photon
+  - [x] Implement `detectFormat()` using magic bytes
+  - [x] Add memory cleanup (`.free()` calls)
 - [ ] 9.3 Migrate `uploadImage.ts`:
   - [ ] Update to use new `processImage()`
   - [ ] Replace MinIO with R2
-- [ ] 9.4 Add image size validation (reject > 5MB for memory safety)
-- [ ] 9.5 Keep `thumbhash.ts` unchanged (pure JS, Workers-compatible)
+- [x] 9.4 Add image size validation (reject > 5MB for memory safety)
+- [x] 9.5 Keep `thumbhash.ts` unchanged (pure JS, Workers-compatible)
 - [ ] 9.6 Remove `sharp` dependency from package.json
 
 ## 10. Configuration & Secrets
@@ -157,7 +157,7 @@
   - [ ] `socket.io`
   - [ ] `minio`
 - [ ] 13.2 Remove Dockerfile and Docker-related files
-- [ ] 13.3 Update Prisma schema (keep, but for sqlite)
-- [ ] 13.4 Update package.json scripts for Wrangler
+- [x] 13.3 Update Prisma schema (keep, but for sqlite)
+- [x] 13.4 Update package.json scripts for Wrangler
 - [ ] 13.5 Update CLAUDE.md with new development guidelines
 - [ ] 13.6 Update README with Cloudflare deployment instructions

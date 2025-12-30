@@ -1,4 +1,15 @@
-export function thumbhash(w: number, h: number, rgba: Buffer) {
+/**
+ * Generate a thumbhash from RGBA pixel data.
+ *
+ * Thumbhash is a very compact representation of a placeholder for an image.
+ * This is a pure JavaScript implementation that works in both Node.js and Workers.
+ *
+ * @param w - Image width (max 100)
+ * @param h - Image height (max 100)
+ * @param rgba - RGBA pixel data as Uint8Array (4 bytes per pixel)
+ * @returns Thumbhash as Uint8Array
+ */
+export function thumbhash(w: number, h: number, rgba: Uint8Array): Uint8Array {
     // Encoding an image larger than 100x100 is slow with no benefit
     if (w > 100 || h > 100) throw new Error(`${w}x${h} doesn't fit in 100x100`)
     let { PI, round, max, cos, abs } = Math

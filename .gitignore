@@ -6,7 +6,11 @@ dist
 
 .env.local
 .env
+.dev.vars
 
 .logs/
 
 .claude/
+
+# Wrangler
+.wrangler/

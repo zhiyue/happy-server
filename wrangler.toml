@@ -1,0 +1,63 @@
+name = "happy-server"
+main = "sources/worker.ts"
+compatibility_date = "2024-12-30"
+compatibility_flags = ["nodejs_compat"]
+
+# Build configuration
+[build]
+command = "yarn build:worker"
+
+# D1 Database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "happy-server-db"
+database_id = "TO_BE_CREATED"
+
+# KV Namespace for caching
+[[kv_namespaces]]
+binding = "CACHE"
+id = "TO_BE_CREATED"
+
+# R2 bucket for file storage
+[[r2_buckets]]
+binding = "FILES"
+bucket_name = "happy-server-files"
+
+# Durable Objects for real-time and coordination
+[[durable_objects.bindings]]
+name = "CONNECTION_MANAGER"
+class_name = "ConnectionManager"
+
+[[durable_objects.bindings]]
+name = "LOCK_MANAGER"
+class_name = "LockManager"
+
+# Migrations for Durable Objects
+[[migrations]]
+tag = "v1"
+new_classes = ["ConnectionManager", "LockManager"]
+
+# Environment variables (non-secrets)
+[vars]
+ENVIRONMENT = "development"
+
+# Development environment overrides
+[env.dev]
+name = "happy-server-dev"
+
+[env.dev.vars]
+ENVIRONMENT = "development"
+
+# Staging environment
+[env.staging]
+name = "happy-server-staging"
+
+[env.staging.vars]
+ENVIRONMENT = "staging"
+
+# Production environment
+[env.production]
+name = "happy-server"
+
+[env.production.vars]
+ENVIRONMENT = "production"

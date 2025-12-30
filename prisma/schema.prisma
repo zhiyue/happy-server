@@ -3,7 +3,7 @@
 
 generator client {
     provider        = "prisma-client-js"
-    previewFeatures = ["metrics", "relationJoins"]
+    previewFeatures = ["driverAdapters"]
 }
 
 generator json {
@@ -11,8 +11,8 @@ generator json {
 }
 
 datasource db {
-    provider = "postgresql"
-    url      = env("DATABASE_URL")
+    provider = "sqlite"
+    url      = "file:./dev.db"
 }
 
 //
@@ -23,7 +23,7 @@ model Account {
     id              String      @id @default(cuid())
     publicKey       String      @unique
     seq             Int         @default(0)
-    feedSeq         BigInt      @default(0)
+    feedSeq         Int         @default(0)
     createdAt       DateTime    @default(now())
     updatedAt       DateTime    @updatedAt
     settings        String?
@@ -332,7 +332,7 @@ model UserFeedItem {
     id        String   @id @default(cuid())
     userId    String
     user      Account  @relation(fields: [userId], references: [id], onDelete: Cascade)
-    counter   BigInt
+    counter   Int
     repeatKey String?
     /// [FeedBody]
     body      Json
