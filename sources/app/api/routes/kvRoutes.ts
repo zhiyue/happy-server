@@ -4,6 +4,7 @@ import { kvGet } from "@/app/kv/kvGet";
 import { kvList } from "@/app/kv/kvList";
 import { kvBulkGet } from "@/app/kv/kvBulkGet";
 import { kvMutate } from "@/app/kv/kvMutate";
+import { createNodeContext } from "@/context";
 import { log } from "@/utils/log";
 
 export function kvRoutes(app: Fastify) {
@@ -151,7 +152,7 @@ export function kvRoutes(app: Fastify) {
         const { mutations } = request.body;
 
         try {
-            const result = await kvMutate({ uid: userId }, mutations);
+            const result = await kvMutate(createNodeContext(userId), mutations);
 
             if (!result.success) {
                 return reply.code(409).send({

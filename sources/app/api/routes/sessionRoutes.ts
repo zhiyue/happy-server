@@ -7,6 +7,7 @@ import { log } from "@/utils/log";
 import { randomKeyNaked } from "@/utils/randomKeyNaked";
 import { allocateUserSeq } from "@/storage/seq";
 import { sessionDelete } from "@/app/session/sessionDelete";
+import { createNodeContext } from "@/context";
 
 export function sessionRoutes(app: Fastify) {
 
@@ -366,7 +367,7 @@ export function sessionRoutes(app: Fastify) {
         const userId = request.userId;
         const { sessionId } = request.params;
 
-        const deleted = await sessionDelete({ uid: userId }, sessionId);
+        const deleted = await sessionDelete(createNodeContext(userId), sessionId);
 
         if (!deleted) {
             return reply.code(404).send({ error: 'Session not found or not owned by user' });
