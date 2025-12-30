@@ -25,7 +25,7 @@ export function buildUserProfile(
         lastName: string | null;
         username: string | null;
         avatar: ImageRef | null;
-        githubUser: { profile: GitHubProfile } | null;
+        githubUser?: { profile: GitHubProfile } | null;
     },
     status: RelationshipStatus
 ): UserProfile {

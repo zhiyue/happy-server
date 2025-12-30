@@ -10,17 +10,12 @@ export async function createMetricsServer() {
 
     app.get('/metrics', async (_request, reply) => {
         try {
-            // Get Prisma metrics in Prometheus format
-            const prismaMetrics = await db.$metrics.prometheus();
-            
             // Get custom application metrics
+            // Note: Prisma metrics not available with D1 adapter
             const appMetrics = await register.metrics();
-            
-            // Combine both metrics
-            const combinedMetrics = prismaMetrics + '\n' + appMetrics;
-            
+
             reply.type('text/plain; version=0.0.4; charset=utf-8');
-            reply.send(combinedMetrics);
+            reply.send(appMetrics);
         } catch (error) {
             log({ module: 'metrics', level: 'error' }, `Error generating metrics: ${error}`);
             reply.code(500).send('Internal Server Error');
