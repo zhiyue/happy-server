@@ -81,18 +81,21 @@
 
 ## 7. API Routes Migration
 
-- [x] 7.1 Set up Hono app structure (`/sources/app/worker.ts`)
+- [x] 7.1 Set up Hono app structure (`/sources/worker.ts`)
 - [x] 7.2 Create middleware:
   - [x] CORS middleware
   - [x] Error handling middleware
   - [x] Request logging middleware
-  - [ ] Auth middleware (JWT validation)
+  - [x] Auth middleware (JWT validation) - `/sources/worker/middleware/auth.ts`
 - [ ] 7.3 Migrate routes from Fastify to Hono:
-  - [ ] Auth routes (`/v1/auth/*`)
+  - [x] Auth routes (`/v1/auth/*`) - `/sources/worker/routes/v1.ts`
+  - [x] Version routes (`/v1/version`) - `/sources/worker/routes/v1.ts`
   - [ ] Session routes (`/v1/sessions/*`)
   - [ ] Machine routes (`/v1/machines/*`)
-  - [ ] Other API routes
-- [ ] 7.4 Update Zod schemas for Hono validators
+  - [ ] KV routes (`/v1/kv/*`)
+  - [ ] User routes (`/v1/user/*`, `/v1/friends/*`)
+  - [ ] Other API routes (account, artifacts, connect, dev, feed, push, voice)
+- [x] 7.4 Update Zod schemas for Hono validators (using @hono/zod-validator)
 - [ ] 7.5 Create response helpers
 
 ## 8. File Storage Migration
