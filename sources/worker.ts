@@ -10,6 +10,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { v1 } from "@/worker/routes/v1";
+import { v2Sessions } from "@/worker/routes/v2Sessions";
 
 // Environment bindings type
 export interface Env {
@@ -68,6 +69,9 @@ app.get("/", (c) => {
 
 // Mount API v1 routes
 app.route("/v1", v1);
+
+// Mount API v2 routes
+app.route("/v2/sessions", v2Sessions);
 
 // 404 handler
 app.notFound((c) => {

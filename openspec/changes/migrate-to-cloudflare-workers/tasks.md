@@ -90,10 +90,10 @@
 - [ ] 7.3 Migrate routes from Fastify to Hono:
   - [x] Auth routes (`/v1/auth/*`) - `/sources/worker/routes/v1.ts`
   - [x] Version routes (`/v1/version`) - `/sources/worker/routes/v1.ts`
-  - [ ] Session routes (`/v1/sessions/*`)
-  - [ ] Machine routes (`/v1/machines/*`)
-  - [ ] KV routes (`/v1/kv/*`)
-  - [ ] User routes (`/v1/user/*`, `/v1/friends/*`)
+  - [x] Session routes (`/v1/sessions/*`) - `/sources/worker/routes/sessions.ts`
+  - [x] Machine routes (`/v1/machines/*`) - `/sources/worker/routes/machines.ts`
+  - [x] KV routes (`/v1/kv/*`) - `/sources/worker/routes/kv.ts`
+  - [x] User routes (`/v1/user/*`, `/v1/friends/*`) - `/sources/worker/routes/users.ts`
   - [ ] Other API routes (account, artifacts, connect, dev, feed, push, voice)
 - [x] 7.4 Update Zod schemas for Hono validators (using @hono/zod-validator)
 - [ ] 7.5 Create response helpers

@@ -15,6 +15,10 @@ import { authMiddleware, AuthVariables } from "@/worker/middleware/auth";
 import { createAuthContext } from "@/worker/auth";
 import { getPrisma } from "@/storage/prisma";
 import { ANDROID_UP_TO_DATE, IOS_UP_TO_DATE } from "@/versions";
+import { sessions } from "@/worker/routes/sessions";
+import { machines } from "@/worker/routes/machines";
+import { kv } from "@/worker/routes/kv";
+import { users, friends } from "@/worker/routes/users";
 
 // Create v1 router
 const v1 = new Hono<{
@@ -265,5 +269,20 @@ v1.post("/auth/account/response", authMiddleware, zValidator("json", accountAuth
 
     return c.json({ success: true });
 });
+
+// Mount session routes
+v1.route("/sessions", sessions);
+
+// Mount machine routes
+v1.route("/machines", machines);
+
+// Mount KV routes
+v1.route("/kv", kv);
+
+// Mount user routes
+v1.route("/user", users);
+
+// Mount friends routes
+v1.route("/friends", friends);
 
 export { v1 };
