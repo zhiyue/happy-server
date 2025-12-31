@@ -87,16 +87,23 @@
   - [x] Error handling middleware
   - [x] Request logging middleware
   - [x] Auth middleware (JWT validation) - `/sources/worker/middleware/auth.ts`
-- [ ] 7.3 Migrate routes from Fastify to Hono:
+- [x] 7.3 Migrate routes from Fastify to Hono:
   - [x] Auth routes (`/v1/auth/*`) - `/sources/worker/routes/v1.ts`
   - [x] Version routes (`/v1/version`) - `/sources/worker/routes/v1.ts`
   - [x] Session routes (`/v1/sessions/*`) - `/sources/worker/routes/sessions.ts`
   - [x] Machine routes (`/v1/machines/*`) - `/sources/worker/routes/machines.ts`
   - [x] KV routes (`/v1/kv/*`) - `/sources/worker/routes/kv.ts`
   - [x] User routes (`/v1/user/*`, `/v1/friends/*`) - `/sources/worker/routes/users.ts`
-  - [ ] Other API routes (account, artifacts, connect, dev, feed, push, voice)
+  - [x] Account routes (`/v1/account/*`, `/v1/usage/*`) - `/sources/worker/routes/account.ts`
+  - [x] Artifacts routes (`/v1/artifacts/*`) - `/sources/worker/routes/artifacts.ts`
+  - [x] Connect routes (`/v1/connect/*`) - `/sources/worker/routes/connect.ts`
+  - [x] Feed routes (`/v1/feed`) - `/sources/worker/routes/feed.ts`
+  - [x] Push routes (`/v1/push-tokens`) - `/sources/worker/routes/push.ts`
+  - [x] Voice routes (`/v1/voice/*`) - `/sources/worker/routes/voice.ts`
+  - [x] Access keys routes (`/v1/access-keys/*`) - `/sources/worker/routes/accessKeys.ts`
+  - [N/A] Dev routes - Development debugging endpoints, skipped (not needed in Workers)
 - [x] 7.4 Update Zod schemas for Hono validators (using @hono/zod-validator)
-- [ ] 7.5 Create response helpers
+- [x] 7.5 Create response helpers (handled inline in route handlers)
 
 ## 8. File Storage Migration
 

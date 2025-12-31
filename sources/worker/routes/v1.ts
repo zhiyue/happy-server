@@ -19,6 +19,13 @@ import { sessions } from "@/worker/routes/sessions";
 import { machines } from "@/worker/routes/machines";
 import { kv } from "@/worker/routes/kv";
 import { users, friends } from "@/worker/routes/users";
+import { account, usage } from "@/worker/routes/account";
+import { artifacts } from "@/worker/routes/artifacts";
+import { feed } from "@/worker/routes/feed";
+import { push } from "@/worker/routes/push";
+import { voice } from "@/worker/routes/voice";
+import { accessKeys } from "@/worker/routes/accessKeys";
+import { connect } from "@/worker/routes/connect";
 
 // Create v1 router
 const v1 = new Hono<{
@@ -284,5 +291,29 @@ v1.route("/user", users);
 
 // Mount friends routes
 v1.route("/friends", friends);
+
+// Mount account routes
+v1.route("/account", account);
+
+// Mount usage routes
+v1.route("/usage", usage);
+
+// Mount artifacts routes
+v1.route("/artifacts", artifacts);
+
+// Mount feed routes
+v1.route("/feed", feed);
+
+// Mount push token routes
+v1.route("/push-tokens", push);
+
+// Mount voice routes
+v1.route("/voice", voice);
+
+// Mount access keys routes
+v1.route("/access-keys", accessKeys);
+
+// Mount connect routes
+v1.route("/connect", connect);
 
 export { v1 };

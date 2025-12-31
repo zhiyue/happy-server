@@ -31,9 +31,14 @@ export interface Env {
     JWT_SECRET: string;
     GITHUB_CLIENT_ID?: string;
     GITHUB_CLIENT_SECRET?: string;
+    GITHUB_REDIRECT_URL?: string;
+    GITHUB_WEBHOOK_SECRET?: string;
+    HANDY_MASTER_SECRET?: string;
 
     // Variables
     ENVIRONMENT: string;
+    FILES_PUBLIC_URL?: string;
+    ELEVENLABS_API_KEY?: string;
 }
 
 // Create Hono app with environment bindings
