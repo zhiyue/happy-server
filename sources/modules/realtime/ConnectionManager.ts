@@ -4,13 +4,27 @@
  * Manages WebSocket connections for real-time communication.
  * Replaces Socket.io functionality with native Workers WebSocket API.
  *
- * Each ConnectionManager instance handles connections for a specific scope
- * (e.g., user connections, room connections).
+ * Each ConnectionManager instance handles connections for a specific user.
+ * Supports different client types: user-scoped, session-scoped, machine-scoped.
  */
+
+type ClientType = "user-scoped" | "session-scoped" | "machine-scoped";
+
+/**
+ * Recipient filter types for controlling which connections receive events.
+ */
+type RecipientFilter =
+    | { type: "all-interested-in-session"; sessionId: string }
+    | { type: "user-scoped-only" }
+    | { type: "machine-scoped-only"; machineId: string }
+    | { type: "all-user-authenticated-connections" };
 
 interface WebSocketSession {
     id: string;
     userId?: string;
+    clientType: ClientType;
+    sessionId?: string;
+    machineId?: string;
     connectedAt: number;
     lastPingAt: number;
 }
@@ -70,10 +84,16 @@ export class ConnectionManager implements DurableObject {
 
         const url = new URL(request.url);
         const userId = url.searchParams.get("userId") || undefined;
+        const clientType = (url.searchParams.get("clientType") || "user-scoped") as ClientType;
+        const sessionId = url.searchParams.get("sessionId") || undefined;
+        const machineId = url.searchParams.get("machineId") || undefined;
 
         const session: WebSocketSession = {
             id: crypto.randomUUID(),
             userId,
+            clientType,
+            sessionId,
+            machineId,
             connectedAt: Date.now(),
             lastPingAt: Date.now(),
         };
@@ -91,6 +111,13 @@ export class ConnectionManager implements DurableObject {
             }
             this.userSockets.get(userId)!.add(server);
         }
+
+        // Send connection confirmation
+        server.send(JSON.stringify({
+            type: "connected",
+            sessionId: session.id,
+            clientType,
+        }));
 
         return new Response(null, {
             status: 101,
@@ -185,7 +212,14 @@ export class ConnectionManager implements DurableObject {
 
     private async handleSendToUser(request: Request): Promise<Response> {
         try {
-            const body = await request.json() as { userId: string; message: unknown };
+            const body = await request.json() as {
+                userId: string;
+                message: {
+                    eventType: "update" | "ephemeral";
+                    payload: unknown;
+                    filter?: RecipientFilter;
+                };
+            };
             const { userId, message } = body;
 
             const userSet = this.userSockets.get(userId);
@@ -193,11 +227,25 @@ export class ConnectionManager implements DurableObject {
                 return Response.json({ success: false, error: "User not connected" }, { status: 404 });
             }
 
-            const messageStr = JSON.stringify(message);
+            const filter = message.filter || { type: "all-user-authenticated-connections" };
+            const eventMessage = JSON.stringify({
+                type: message.eventType,
+                payload: message.payload,
+                timestamp: Date.now(),
+            });
+
             let sent = 0;
             for (const ws of userSet) {
+                const session = this.sessions.get(ws);
+                if (!session) continue;
+
+                // Apply recipient filter
+                if (!this.shouldSendToSession(session, filter)) {
+                    continue;
+                }
+
                 try {
-                    ws.send(messageStr);
+                    ws.send(eventMessage);
                     sent++;
                 } catch {
                     // Socket may be closed
@@ -207,6 +255,44 @@ export class ConnectionManager implements DurableObject {
             return Response.json({ success: true, sent });
         } catch {
             return Response.json({ error: "Invalid request" }, { status: 400 });
+        }
+    }
+
+    /**
+     * Determine if an event should be sent to a specific session based on the filter.
+     */
+    private shouldSendToSession(session: WebSocketSession, filter: RecipientFilter): boolean {
+        switch (filter.type) {
+            case "all-interested-in-session":
+                // Send to session-scoped with matching session + all user-scoped
+                if (session.clientType === "session-scoped") {
+                    return session.sessionId === filter.sessionId;
+                }
+                if (session.clientType === "machine-scoped") {
+                    return false; // Machines don't need session updates
+                }
+                // user-scoped always gets it
+                return true;
+
+            case "user-scoped-only":
+                return session.clientType === "user-scoped";
+
+            case "machine-scoped-only":
+                // Send to user-scoped (mobile/web needs all machine updates) + only the specific machine
+                if (session.clientType === "user-scoped") {
+                    return true;
+                }
+                if (session.clientType === "machine-scoped") {
+                    return session.machineId === filter.machineId;
+                }
+                return false; // session-scoped doesn't need machine updates
+
+            case "all-user-authenticated-connections":
+                // Send to all connection types
+                return true;
+
+            default:
+                return false;
         }
     }
 

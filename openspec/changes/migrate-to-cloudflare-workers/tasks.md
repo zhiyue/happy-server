@@ -50,14 +50,16 @@
 
 ## 4. Event Bus & Pub/Sub Migration
 
-- [ ] 4.1 Design Durable Object for event coordination
-- [ ] 4.2 Create EventBus Durable Object class
-- [ ] 4.3 Implement pub/sub methods:
-  - [ ] `subscribe(channel, handler)`
-  - [ ] `publish(channel, message)`
-  - [ ] `unsubscribe(channel)`
+- [x] 4.1 Design Durable Object for event coordination
+- [x] 4.2 Create EventBus Durable Object class (`/sources/modules/eventbus/EventBus.ts`)
+- [x] 4.3 Implement pub/sub methods:
+  - [x] `subscribe(channel, handler)` - Via WebSocket subscription
+  - [x] `publish(channel, message)` - Via HTTP `/publish` endpoint
+  - [x] `unsubscribe(channel)` - Via WebSocket message
 - [x] 4.4 Update `wrangler.toml` with DO bindings
-- [ ] 4.5 Implement DO event bus (new capability, no existing pub/sub to replace)
+- [x] 4.5 Implement DO event bus (new capability, no existing pub/sub to replace)
+  - [x] Created event type definitions and builders (`/sources/modules/eventbus/events.ts`)
+  - [x] Created event emitter helper (`/sources/modules/eventbus/emitter.ts`)
 
 ## 5. Real-time (WebSocket) Migration
 
@@ -69,7 +71,11 @@
   - [x] Heartbeat/ping-pong
 - [x] 5.3 Implement room/channel abstraction (replace Socket.io rooms)
 - [x] 5.4 Handle disconnection and cleanup
-- [ ] 5.5 Replace Socket.io code with DO WebSocket
+- [x] 5.5 Replace Socket.io code with DO WebSocket
+  - [x] Created `/v1/updates` WebSocket route (`/sources/worker/routes/websocket.ts`)
+  - [x] Updated ConnectionManager with client type filtering
+  - [x] Added recipient filter support for targeted event delivery
+  - Note: Old Socket.io code in `/sources/app/api/socket/` remains for reference during transition
 
 ## 6. Lock Module Migration
 
@@ -78,7 +84,8 @@
   - [x] `acquire(lockId, ttl)`
   - [x] `release(lockId)`
   - [x] `extend(lockId, ttl)`
-- [ ] 6.3 Replace process-internal AsyncLock with DO distributed locks
+- [x] 6.3 Replace process-internal AsyncLock with DO distributed locks
+  - Note: Old AsyncLock only used in deprecated Socket.io handlers; Worker routes use LockManager DO
 
 ## 7. API Routes Migration
 

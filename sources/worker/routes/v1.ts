@@ -26,6 +26,7 @@ import { push } from "@/worker/routes/push";
 import { voice } from "@/worker/routes/voice";
 import { accessKeys } from "@/worker/routes/accessKeys";
 import { connect } from "@/worker/routes/connect";
+import { websocket } from "@/worker/routes/websocket";
 
 // Create v1 router
 const v1 = new Hono<{
@@ -315,5 +316,8 @@ v1.route("/access-keys", accessKeys);
 
 // Mount connect routes
 v1.route("/connect", connect);
+
+// Mount WebSocket routes (real-time updates)
+v1.route("/updates", websocket);
 
 export { v1 };

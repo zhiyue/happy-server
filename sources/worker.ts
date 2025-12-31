@@ -26,6 +26,7 @@ export interface Env {
     // Durable Objects
     CONNECTION_MANAGER: DurableObjectNamespace;
     LOCK_MANAGER: DurableObjectNamespace;
+    EVENT_BUS: DurableObjectNamespace;
 
     // Secrets (set via wrangler secret put)
     JWT_SECRET: string;
@@ -98,3 +99,4 @@ export default app;
 // Export Durable Object classes
 export { ConnectionManager } from "@/modules/realtime/ConnectionManager";
 export { LockManager } from "@/modules/lock/LockManager";
+export { EventBus } from "@/modules/eventbus/EventBus";

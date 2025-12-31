@@ -32,10 +32,18 @@ class_name = "ConnectionManager"
 name = "LOCK_MANAGER"
 class_name = "LockManager"
 
+[[durable_objects.bindings]]
+name = "EVENT_BUS"
+class_name = "EventBus"
+
 # Migrations for Durable Objects
 [[migrations]]
 tag = "v1"
 new_classes = ["ConnectionManager", "LockManager"]
+
+[[migrations]]
+tag = "v2"
+new_classes = ["EventBus"]
 
 # Environment variables (non-secrets)
 [vars]
