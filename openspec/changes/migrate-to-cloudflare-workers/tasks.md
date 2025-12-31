@@ -45,7 +45,8 @@
   - [x] `set(key, value, ttl)` - Set with expiration
   - [x] `delete(key)` - Delete key
   - [x] `list(prefix)` - List keys by prefix
-- [ ] 3.4 Replace simpleCache (database-based) with KV wrapper
+- [x] 3.4 Replace simpleCache (database-based) with KV wrapper
+  - Note: simpleCache is not imported anywhere in the codebase (dead code)
 
 ## 4. Event Bus & Pub/Sub Migration
 
@@ -108,13 +109,14 @@
 ## 8. File Storage Migration
 
 - [ ] 8.1 Create R2 bucket (`wrangler r2 bucket create happy-server-files`)
-- [ ] 8.2 Create R2 wrapper module (`/sources/modules/storage/`)
-- [ ] 8.3 Implement file operations:
-  - [ ] `upload(key, file)`
-  - [ ] `download(key)`
-  - [ ] `delete(key)`
-  - [ ] `getSignedUrl(key)`
-- [ ] 8.4 Migrate MinIO/S3 operations to R2
+- [x] 8.2 Create R2 wrapper module (`/sources/modules/storage/`)
+- [x] 8.3 Implement file operations:
+  - [x] `upload(key, file)`
+  - [x] `download(key)`
+  - [x] `delete(key)`
+  - [x] `getPublicUrl(key)` - Using public URL instead of signed URLs
+- [x] 8.4 Migrate MinIO/S3 operations to R2
+  - [x] Created `/sources/worker/utils/uploadImage.ts` using R2
 
 ## 9. Image Processing Migration
 
@@ -124,9 +126,10 @@
   - [x] Implement `resize()` using photon
   - [x] Implement `detectFormat()` using magic bytes
   - [x] Add memory cleanup (`.free()` calls)
-- [ ] 9.3 Migrate `uploadImage.ts`:
-  - [ ] Update to use new `processImage()`
-  - [ ] Replace MinIO with R2
+- [x] 9.3 Migrate `uploadImage.ts`:
+  - [x] Update to use new `processImage()`
+  - [x] Replace MinIO with R2
+  - [x] Created `/sources/worker/utils/uploadImage.ts`
 - [x] 9.4 Add image size validation (reject > 5MB for memory safety)
 - [x] 9.5 Keep `thumbhash.ts` unchanged (pure JS, Workers-compatible)
 - [ ] 9.6 Remove `sharp` dependency from package.json
