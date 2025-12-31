@@ -15,7 +15,10 @@
   - [x] `@cloudflare/workers-types` - TypeScript type definitions
   - [x] `@cf-wasm/photon` - Image processing
 - [x] 1.6 Create `.dev.vars` for local development secrets
-- [ ] 1.7 Set up Miniflare for local testing
+- [x] 1.7 Set up Miniflare for local testing
+  - [x] Installed `@cloudflare/vitest-pool-workers`
+  - [x] Configured `vitest.config.ts` with `defineWorkersConfig`
+  - [x] Added `test:watch` script
 
 ## 2. Database Migration (Prisma + D1)
 
@@ -139,7 +142,7 @@
   - [x] Created `/sources/worker/utils/uploadImage.ts`
 - [x] 9.4 Add image size validation (reject > 5MB for memory safety)
 - [x] 9.5 Keep `thumbhash.ts` unchanged (pure JS, Workers-compatible)
-- [ ] 9.6 Remove `sharp` dependency from package.json
+- [x] 9.6 Remove `sharp` dependency from package.json
 
 ## 10. Configuration & Secrets
 
@@ -150,9 +153,11 @@
 
 ## 11. Testing
 
-- [ ] 11.1 Set up Vitest with Miniflare
+- [x] 11.1 Set up Vitest with Miniflare (via @cloudflare/vitest-pool-workers)
 - [ ] 11.2 Create test utilities for D1/KV/DO mocking
 - [ ] 11.3 Migrate existing tests to Workers environment
+  - Note: `friendNotification.spec.ts` needs Worker-compatible Prisma setup
+  - Note: `processImage.spec.ts` needs to not use Node.js `fs` module
 - [ ] 11.4 Write integration tests for:
   - [ ] API endpoints
   - [ ] Database operations
@@ -171,11 +176,16 @@
 
 ## 13. Cleanup
 
-- [ ] 13.1 Remove Node.js-specific dependencies:
-  - [ ] `sharp`
-  - [ ] `ioredis`
-  - [ ] `socket.io`
-  - [ ] `minio`
+- [x] 13.1 Remove Node.js-specific dependencies:
+  - [x] `sharp`
+  - [x] `ioredis`
+  - [x] `socket.io` (and socket.io-adapter, @socket.io/redis-streams-adapter)
+  - [x] `minio`
+  - [x] `fastify` (and related: @fastify/bearer-auth, @fastify/cors, fastify-type-provider-zod)
+  - [x] `pino-pretty` (Fastify logger)
+  - [x] `prom-client` (Prometheus metrics, Node.js specific)
+  - [x] `dotenv` (Workers use env bindings)
+  - [x] `tmp` (Workers have no filesystem)
 - [ ] 13.2 Remove Dockerfile and Docker-related files
 - [x] 13.3 Update Prisma schema (keep, but for sqlite)
 - [x] 13.4 Update package.json scripts for Wrangler
