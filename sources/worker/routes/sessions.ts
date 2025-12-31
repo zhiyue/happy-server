@@ -13,7 +13,7 @@ import type { Env } from "@/worker";
 import { authMiddleware, AuthVariables } from "@/worker/middleware/auth";
 import { getPrisma } from "@/storage/prisma";
 import { inBatch, addStatement, afterBatch } from "@/storage/inBatch";
-import { WorkerContext } from "@/context";
+import { WorkerContext } from "@/worker/types/context";
 
 // Create sessions router
 const sessions = new Hono<{

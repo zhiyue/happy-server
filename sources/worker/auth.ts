@@ -11,6 +11,43 @@
 import * as privacyKit from "privacy-kit";
 import type { Env } from "@/worker";
 
+/**
+ * Standalone token verifier for simple auth checks.
+ * Used by WebSocket routes where full AuthContext is not needed.
+ *
+ * @param token - JWT token to verify
+ * @param jwtSecret - The JWT secret (from env.JWT_SECRET)
+ * @returns Verified token payload or null if invalid
+ */
+export async function verifyToken(
+    token: string,
+    jwtSecret: string
+): Promise<{ userId: string; extras?: unknown } | null> {
+    try {
+        const generator = await privacyKit.createPersistentTokenGenerator({
+            service: "handy",
+            seed: jwtSecret,
+        });
+
+        const verifier = await privacyKit.createPersistentTokenVerifier({
+            service: "handy",
+            publicKey: generator.publicKey,
+        });
+
+        const verified = await verifier.verify(token);
+        if (!verified) {
+            return null;
+        }
+
+        return {
+            userId: verified.user as string,
+            extras: verified.extras as unknown,
+        };
+    } catch {
+        return null;
+    }
+}
+
 interface TokenCacheEntry {
     userId: string;
     extras?: unknown;

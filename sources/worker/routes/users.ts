@@ -12,20 +12,13 @@ import type { Env } from "@/worker";
 import { authMiddleware, AuthVariables } from "@/worker/middleware/auth";
 import { getPrisma } from "@/storage/prisma";
 import { PrismaClient } from "@prisma/client";
-import { WorkerContext } from "@/context";
-import { buildUserProfile, UserProfile } from "@/app/social/type";
-import { friendAdd } from "@/app/social/friendAdd";
-import { friendRemove } from "@/app/social/friendRemove";
-
-// RelationshipStatus enum values (matching Prisma schema)
-type RelationshipStatus = "none" | "requested" | "pending" | "friend" | "rejected";
-const RelationshipStatus = {
-    none: "none" as const,
-    requested: "requested" as const,
-    pending: "pending" as const,
-    friend: "friend" as const,
-    rejected: "rejected" as const,
-};
+import { WorkerContext } from "@/worker/types/context";
+import {
+    buildUserProfile,
+    UserProfile,
+    RelationshipStatus,
+} from "@/worker/types/social";
+import { friendAdd, friendRemove } from "@/worker/actions/social";
 
 // Create users router
 const users = new Hono<{
@@ -81,7 +74,8 @@ function createWorkerContext(userId: string, env: Env): WorkerContext {
  */
 async function friendListWorker(
     prisma: PrismaClient,
-    uid: string
+    uid: string,
+    filesPublicUrl?: string
 ): Promise<UserProfile[]> {
     // Query all relationships where current user is fromUserId with friend, pending, or requested status
     const relationships = await prisma.userRelationship.findMany({
@@ -102,7 +96,7 @@ async function friendListWorker(
 
     // Build UserProfile objects
     return relationships.map((rel: RelationshipData) =>
-        buildUserProfile(rel.toUser as Parameters<typeof buildUserProfile>[0], rel.status)
+        buildUserProfile(rel.toUser as Parameters<typeof buildUserProfile>[0], rel.status, filesPublicUrl)
     );
 }
 
@@ -139,7 +133,7 @@ users.get("/:id", authMiddleware, zValidator("param", userIdParamSchema), async 
 
     // Build user profile
     return c.json({
-        user: buildUserProfile(user as Parameters<typeof buildUserProfile>[0], status),
+        user: buildUserProfile(user as Parameters<typeof buildUserProfile>[0], status, c.env.FILES_PUBLIC_URL),
     });
 });
 
@@ -179,7 +173,7 @@ users.get("/search", authMiddleware, zValidator("query", searchQuerySchema), asy
                 },
             });
             const status: RelationshipStatus = relationship?.status || RelationshipStatus.none;
-            return buildUserProfile(user as Parameters<typeof buildUserProfile>[0], status);
+            return buildUserProfile(user as Parameters<typeof buildUserProfile>[0], status, c.env.FILES_PUBLIC_URL);
         })
     );
 
@@ -200,7 +194,7 @@ friends.post("/add", authMiddleware, zValidator("json", friendActionSchema), asy
     const { uid } = c.req.valid("json");
     const ctx = createWorkerContext(userId, c.env);
 
-    const user = await friendAdd(ctx, uid);
+    const user = await friendAdd(ctx, uid, c.env.FILES_PUBLIC_URL);
     return c.json({ user });
 });
 
@@ -210,7 +204,7 @@ friends.post("/remove", authMiddleware, zValidator("json", friendActionSchema), 
     const { uid } = c.req.valid("json");
     const ctx = createWorkerContext(userId, c.env);
 
-    const user = await friendRemove(ctx, uid);
+    const user = await friendRemove(ctx, uid, c.env.FILES_PUBLIC_URL);
     return c.json({ user });
 });
 
@@ -219,7 +213,7 @@ friends.get("/", authMiddleware, async (c) => {
     const userId = c.get("userId");
     const prisma = getPrisma(c.env.DB);
 
-    const friendsList = await friendListWorker(prisma, userId);
+    const friendsList = await friendListWorker(prisma, userId, c.env.FILES_PUBLIC_URL);
     return c.json({ friends: friendsList });
 });
 

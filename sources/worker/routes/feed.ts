@@ -12,7 +12,7 @@ import type { Env } from "@/worker";
 import { authMiddleware, AuthVariables } from "@/worker/middleware/auth";
 import { getPrisma } from "@/storage/prisma";
 import { Prisma, PrismaClient } from "@prisma/client";
-import { FeedBodySchema } from "@/app/feed/types";
+import { FeedBodySchema } from "@/worker/types/feed";
 
 // Create feed router
 const feed = new Hono<{

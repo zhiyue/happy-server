@@ -1,0 +1,31 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "types": ["@cloudflare/workers-types", "vitest/globals"]
+    },
+    "include": [
+        "sources/worker.ts",
+        "sources/worker/**/*",
+        "sources/modules/**/*",
+        "sources/storage/prisma.ts",
+        "sources/storage/inBatch.ts",
+        "sources/storage/types.ts",
+        "sources/versions.ts"
+    ],
+    "exclude": [
+        "sources/app/**/*",
+        "sources/main.ts",
+        "sources/context.ts",
+        "sources/storage/db.ts",
+        "sources/storage/redis.ts",
+        "sources/storage/files.ts",
+        "sources/storage/simpleCache.ts",
+        "sources/storage/inTx.ts",
+        "sources/recipes/**/*",
+        "sources/services/**/*",
+        "sources/utils/log.ts",
+        "sources/modules/github.ts",
+        "**/*.spec.ts",
+        "**/*.test.ts"
+    ]
+}

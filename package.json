@@ -8,7 +8,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc --noEmit",
-    "build:worker": "tsc --noEmit",
+    "build:worker": "tsc --noEmit -p tsconfig.worker.json",
     "start": "tsx ./sources/main.ts",
     "dev": "lsof -ti tcp:3005 | xargs kill -9 && tsx --env-file=.env --env-file=.env.dev ./sources/main.ts",
     "dev:worker": "wrangler dev",

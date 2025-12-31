@@ -13,7 +13,7 @@ import type { Env } from "@/worker";
 import { authMiddleware, AuthVariables } from "@/worker/middleware/auth";
 import { getPrisma } from "@/storage/prisma";
 import { PrismaClient } from "@prisma/client";
-import { WorkerContext } from "@/context";
+import { WorkerContext } from "@/worker/types/context";
 import { inBatch, addStatement, afterBatch } from "@/storage/inBatch";
 
 // Create KV router
